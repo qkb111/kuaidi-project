@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#090b0d" />
+    <title>驿站地图 · 校园快递</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-frame">
+      <header class="app-header">
+        <a class="brand" href="index.html" aria-label="返回首页">
+          <span class="brand-mark">取</span>
+          <span>校园快递</span>
+        </a>
+        <span class="header-status"><i></i>今日 3 件待取</span>
+      </header>
+
+      <!-- 同学 C 负责本页：只在 main 里改功能 -->
+      <main id="app-content" class="screen" tabindex="-1">
+        <div class="subscreen-head">
+          <a class="back-button" href="index.html" aria-label="返回首页">‹</a>
+          <div>
+            <h1>驿站地图</h1>
+            <small>平面货架图，点选货架查看位置</small>
+          </div>
+        </div>
+
+        <div class="map-toolbar">
+          <div class="zone-switch">
+            <button class="zone-button active" type="button">A 区</button>
+            <button class="zone-button" type="button">B 区</button>
+          </div>
+          <div class="map-legend">
+            <span><i class="legend-dot blue"></i>已选</span>
+            <span><i class="legend-dot gray"></i>货架</span>
+          </div>
+        </div>
+
+        <div class="station-map" id="stationMap"></div>
+
+        <div class="map-summary">
+          <div><span>当前货架</span><strong id="selectedShelfLabel">A-03</strong></div>
+          <small id="selectedLayerLabel">夹层 2 · 18 格</small>
+        </div>
+      </main>
+
+      <nav class="bottom-nav" aria-label="主导航">
+        <a href="index.html"><span>⌂</span><small>首页</small></a>
+        <a href="map.html" class="active"><span>⌖</span><small>驿站地图</small></a>
+      </nav>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      // 同学 C 的功能脚本写在这里
+      const shelfRows = [
+        ['A-01', 'A-02', 'A-03', 'A-04', 'A-05', 'A-06'],
+        ['A-07', 'A-08', 'A-09', 'A-10', 'A-11', 'A-12'],
+        ['A-13', 'A-14', 'A-15', 'A-16', 'A-17', 'A-18'],
+        ['A-19', 'A-20', 'A-21', 'A-22', 'A-23', 'A-24'],
+      ];
+
+      const selected = { shelf: 'A-03', layer: '夹层 2 · 18 格' };
+      const toast = document.getElementById('toast');
+      const stationMap = document.getElementById('stationMap');
+      const shelfLabel = document.getElementById('selectedShelfLabel');
+      const layerLabel = document.getElementById('selectedLayerLabel');
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('visible');
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => toast.classList.remove('visible'), 2200);
+      }
+
+      function paintMap() {
+        stationMap.innerHTML = shelfRows.map((row, rowIndex) => `
+          <div class="map-row">
+            <span class="map-row-label">${rowIndex + 1} 排</span>
+            ${row.map((shelf) => `<button class="shelf-rect ${shelf === selected.shelf ? 'selected' : ''}" data-shelf="${shelf}" type="button">${shelf}</button>`).join('')}
+          </div>`).join('');
+      }
+
+      document.addEventListener('click', (event) => {
+        const shelfButton = event.target.closest('.shelf-rect');
+        if (shelfButton) {
+          const shelf = shelfButton.dataset.shelf;
+          selected.shelf = shelf;
+          selected.layer = `夹层 2 · ${Number(shelf.slice(2)) + 1} 格`;
+          paintMap();
+          shelfLabel.textContent = selected.shelf;
+          layerLabel.textContent = selected.layer;
+          showToast(`已选择 ${selected.shelf}`);
+          return;
+        }
+
+        const zoneButton = event.target.closest('.zone-button');
+        if (zoneButton) {
+          document.querySelectorAll('.zone-button').forEach((item) => item.classList.remove('active'));
+          zoneButton.classList.add('active');
+          showToast(zoneButton.textContent.trim() === 'B 区' ? 'B 区示意图将在后续补充' : '已切换到 A 区');
+        }
+      });
+
+      paintMap();
+    </script>
+  </body>
+</html>

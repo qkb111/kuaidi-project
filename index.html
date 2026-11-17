@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#090b0d" />
+    <meta name="description" content="校园快递取件助手首页，集中展示取件码、身份码和驿站货架地图。" />
+    <title>校园快递 · 取件助手</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-frame">
+      <header class="app-header">
+        <a class="brand" href="index.html" aria-label="返回首页">
+          <span class="brand-mark">取</span>
+          <span>校园快递</span>
+        </a>
+        <span class="header-status"><i></i>今日 3 件待取</span>
+      </header>
+
+      <main id="appRoot" tabindex="-1">
+        <section class="screen" aria-labelledby="homeTitle">
+          <div class="screen-top">
+            <div>
+              <p class="eyebrow">取快递 · 首页</p>
+              <h1 id="homeTitle">今天要拿哪一件？<br /><em>先看码，再看货架。</em></h1>
+            </div>
+            <div class="date-mark"><strong>13</strong>11 月</div>
+          </div>
+
+          <div class="module-list">
+            <!-- 取件码卡片 → 同学 A 负责的 pickup.html -->
+            <a class="module-card" href="pickup.html" aria-label="打开取件码页面">
+              <div class="module-head">
+                <div class="module-title">
+                  <span class="module-icon amber">#</span>
+                  <div>
+                    <p class="module-label">取件码</p>
+                    <p class="module-subtitle">菜鸟驿站 · 数字码</p>
+                  </div>
+                </div>
+                <span class="module-arrow">›</span>
+              </div>
+              <div class="pickup-code"><span>582</span> 462</div>
+              <div class="code-meta">
+                <div class="meta-box"><span class="meta-label">货架号</span><strong class="meta-value">A-03</strong></div>
+                <div class="meta-box"><span class="meta-label">夹层 / 格位</span><strong class="meta-value">夹层 2 · 18 格</strong></div>
+              </div>
+              <div class="card-footer"><span class="card-caption">点击查看详情 →</span></div>
+            </a>
+
+            <!-- 身份码卡片 → 同学 B 负责的 barcode.html -->
+            <a class="module-card" href="barcode.html" aria-label="打开身份码页面">
+              <div class="module-head">
+                <div class="module-title">
+                  <span class="module-icon green">▥</span>
+                  <div>
+                    <p class="module-label">身份码</p>
+                    <p class="module-subtitle">从平台抓取 · 条形码</p>
+                  </div>
+                </div>
+                <span class="module-arrow">›</span>
+              </div>
+              <div class="barcode-box" aria-label="身份码示意条形码"></div>
+              <div class="barcode-label"><span>菜鸟驿站身份验证</span><strong>尾号 2816</strong></div>
+            </a>
+
+            <!-- 驿站地图卡片 → 同学 C 负责的 map.html -->
+            <a class="module-card" href="map.html" aria-label="打开驿站地图页面">
+              <div class="module-head">
+                <div class="module-title">
+                  <span class="module-icon blue">⌖</span>
+                  <div>
+                    <p class="module-label">驿站地图</p>
+                    <p class="module-subtitle">平面货架图 · 选择货架</p>
+                  </div>
+                </div>
+                <span class="module-arrow">›</span>
+              </div>
+              <div class="map-preview">
+                <span class="map-shelf">01</span>
+                <span class="map-shelf">02</span>
+                <span class="map-shelf active">03</span>
+                <span class="map-shelf">04</span>
+                <span class="map-shelf">05</span>
+                <span class="map-shelf">06</span>
+              </div>
+              <div class="map-card-footer"><strong>菜鸟驿站 · 南区店</strong><span>点击查看完整地图 →</span></div>
+            </a>
+          </div>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="主导航">
+        <a href="index.html" class="active"><span>⌂</span><small>首页</small></a>
+        <a href="map.html"><span>⌖</span><small>驿站地图</small></a>
+      </nav>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      // 首页只做两件小事：生成装饰条形码 + 显示当天日期。
+      // 队友各自的功能逻辑请写在自己负责的页面里，不要改这里。
+      const barcodeBox = document.querySelector('.barcode-box');
+      barcodeBox.innerHTML = Array.from({ length: 32 }, (_, index) => {
+        const value = (index * 11 + 4 * 5 + 7) % 10;
+        const width = value % 4 === 0 ? 3 : 2;
+        const height = 43 + value * 5;
+        return `<i style="width:${width}px;height:${height}%"></i>`;
+      }).join('');
+
+      const now = new Date();
+      document.querySelector('.date-mark').innerHTML = `<strong>${now.getDate()}</strong>${now.getMonth() + 1} 月`;
+    </script>
+  </body>
+</html>

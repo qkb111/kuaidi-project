@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#090b0d" />
+    <title>【页面标题】 · 校园快递</title>
+    <!-- 直接复用首页样式，不用再写一套配色 -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-frame">
+      <header class="app-header">
+        <a class="brand" href="index.html" aria-label="返回首页">
+          <span class="brand-mark">取</span>
+          <span>校园快递</span>
+        </a>
+        <span class="header-status"><i></i>今日 3 件待取</span>
+      </header>
+
+      <main id="app-content" class="screen" tabindex="-1">
+        <!-- 1. 顶部通用返回栏：只改标题和说明 -->
+        <div class="subscreen-head">
+          <a class="back-button" href="index.html" aria-label="返回首页">‹</a>
+          <div>
+            <h1>【页面标题】</h1>
+            <small>【一句话说明这个页面做什么】</small>
+          </div>
+        </div>
+
+        <!-- ===== 2. 你的功能区域：只改下面这块 ===== -->
+        <article class="detail-card page-placeholder">
+          <p class="detail-kicker">空白模板</p>
+          <h2>把功能写在 main 里面</h2>
+          <p class="long-note">
+            直接复用 style.css 里已有的样式即可：<br />
+            · 普通卡片：<code>class="detail-card"</code><br />
+            · 主按钮：<code>class="wide-action"</code>（次要按钮再叠加 <code>soft-action</code>）<br />
+            · 信息格子：<code>class="meta-box"</code>，里面放 <code>meta-label</code> / <code>meta-value</code><br />
+            · 说明文字：<code>class="long-note"</code>
+          </p>
+        </article>
+        <!-- ===== 你的功能区域结束 ===== -->
+      </main>
+
+      <nav class="bottom-nav" aria-label="主导航">
+        <a href="index.html"><span>⌂</span><small>首页</small></a>
+        <a href="map.html"><span>⌖</span><small>驿站地图</small></a>
+      </nav>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
