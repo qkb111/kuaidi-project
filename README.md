@@ -6,7 +6,8 @@
 
 ## 在线访问
 
-- 线上预览（拆分前版本）：https://cedar-frost-ai51h.ship.place/
+- 拆分后的线上预览（GitHub Pages）：https://qkb111.github.io/kuaidi-project/
+- 拆分前版本：https://cedar-frost-ai51h.ship.place/
 - GitHub 仓库：https://github.com/qkb111/kuaidi-project
 
 ## 目录结构
