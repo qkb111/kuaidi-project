@@ -49,5 +49,6 @@ python -m http.server 8000
 2. 每个人在**自己的分支**上开发，完成后发 Pull Request 到 `main`，至少由一位队友 Review 后合并。
 3. `main` 分支已开启保护：协作者不能直接 push，必须走 PR（仓库所有者保留直接推送权限）。
 4. 需要改 `style.css` 这类公共文件时，先在群里说一声，由组长统一改，避免冲突。
+5. 让 AI 助手改代码时，先让它读 [AGENTS.md](AGENTS.md)，里面写了"只能改自己那一页"的硬性规则。
 
 详细步骤见 [CONTRIBUTING.md](CONTRIBUTING.md)。
