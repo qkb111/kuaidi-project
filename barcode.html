@@ -28,11 +28,12 @@
         </div>
 
         <article class="detail-card">
-          <p class="detail-kicker">菜鸟驿站 · 签收身份码</p>
+          <p class="detail-kicker">菜鸟驿站 · 演示</p>
           <h2>身份条形码</h2>
           <div class="barcode-box large" id="identityBarcode" aria-label="身份码示意条形码"></div>
-          <div class="barcode-label"><span>身份码尾号</span><strong id="identityTail">2816</strong></div>
+          <div class="barcode-label"><span>示意尾号</span><strong id="identityTail" aria-live="polite"></strong></div>
           <button class="wide-action soft-action refresh-identity" type="button">刷新示意条形码</button>
+          <p class="long-note">示意条形码仅供演示，不能用于驿站扫码。</p>
         </article>
       </main>
 
@@ -45,11 +46,12 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script>
-      // 同学 B 的功能脚本写在这里
       const toast = document.getElementById('toast');
       const barcodeBox = document.getElementById('identityBarcode');
       const tailLabel = document.getElementById('identityTail');
-      let identityTail = '2816';
+      const minTail = 1000;
+      const tailCount = 9000;
+      let identityTail = minTail + Math.floor(Math.random() * tailCount);
 
       function showToast(message) {
         toast.textContent = message;
@@ -58,27 +60,35 @@
         showToast.timer = setTimeout(() => toast.classList.remove('visible'), 2200);
       }
 
-      function renderBarcode(seed = 4) {
-        return Array.from({ length: 32 }, (_, index) => {
-          const value = (index * 11 + seed * 5 + 7) % 10;
-          const width = value % 4 === 0 ? 3 : 2;
-          const height = 43 + value * 5;
-          return `<i style="width:${width}px;height:${height}%"></i>`;
-        }).join('');
-      }
-
-      function paint() {
-        barcodeBox.innerHTML = renderBarcode(Number(identityTail.slice(-2)));
-        tailLabel.textContent = identityTail;
+      function paint(tail) {
+        const digits = String(tail);
+        const bars = document.createDocumentFragment();
+        // 每位数字用四对长短条纹表示，图案仅用于演示。
+        for (const digit of digits) {
+          for (const mask of [8, 4, 2, 1]) {
+            const firstIsTall = (Number(digit) & mask) !== 0;
+            const first = document.createElement('i');
+            const second = document.createElement('i');
+            first.style.height = firstIsTall ? '80%' : '48%';
+            second.style.height = firstIsTall ? '48%' : '80%';
+            first.setAttribute('aria-hidden', 'true');
+            second.setAttribute('aria-hidden', 'true');
+            bars.append(first, second);
+          }
+        }
+        barcodeBox.replaceChildren(bars);
+        tailLabel.textContent = digits;
       }
 
       document.querySelector('.refresh-identity').addEventListener('click', () => {
-        identityTail = String(Math.floor(1000 + Math.random() * 9000));
-        paint();
+        // 跳过当前尾号，确保每次点击可见变化。
+        const next = minTail + Math.floor(Math.random() * (tailCount - 1));
+        identityTail = next >= identityTail ? next + 1 : next;
+        paint(identityTail);
         showToast('示意身份码已刷新');
       });
 
-      paint();
+      paint(identityTail);
     </script>
   </body>
 </html>
