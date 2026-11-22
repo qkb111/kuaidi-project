@@ -28,11 +28,9 @@
         </div>
 
         <article class="detail-card">
-          <p class="detail-kicker">菜鸟驿站 · 签收身份码</p>
-          <h2>身份条形码</h2>
-          <div class="barcode-box large" id="identityBarcode" aria-label="身份码示意条形码"></div>
-          <div class="barcode-label"><span>身份码尾号</span><strong id="identityTail">2816</strong></div>
-          <button class="wide-action soft-action refresh-identity" type="button">刷新示意条形码</button>
+          <h2>菜鸟驿站</h2>
+          <p class="long-note">在淘宝页面出示身份码。如提示登录，请使用自己的淘宝账号。</p>
+          <a class="wide-action soft-action" href="https://pages-fast.m.taobao.com/wow/z/uniapp/1011717/last-mile-fe/end-collect-platform/identity-code?spm=cn_end_pick_up.xiaoyuan.xiaoyuan.5&amp;x-ssr=true">打开淘宝身份码</a>
         </article>
       </main>
 
@@ -44,41 +42,5 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script>
-      // 同学 B 的功能脚本写在这里
-      const toast = document.getElementById('toast');
-      const barcodeBox = document.getElementById('identityBarcode');
-      const tailLabel = document.getElementById('identityTail');
-      let identityTail = '2816';
-
-      function showToast(message) {
-        toast.textContent = message;
-        toast.classList.add('visible');
-        clearTimeout(showToast.timer);
-        showToast.timer = setTimeout(() => toast.classList.remove('visible'), 2200);
-      }
-
-      function renderBarcode(seed = 4) {
-        return Array.from({ length: 32 }, (_, index) => {
-          const value = (index * 11 + seed * 5 + 7) % 10;
-          const width = value % 4 === 0 ? 3 : 2;
-          const height = 43 + value * 5;
-          return `<i style="width:${width}px;height:${height}%"></i>`;
-        }).join('');
-      }
-
-      function paint() {
-        barcodeBox.innerHTML = renderBarcode(Number(identityTail.slice(-2)));
-        tailLabel.textContent = identityTail;
-      }
-
-      document.querySelector('.refresh-identity').addEventListener('click', () => {
-        identityTail = String(Math.floor(1000 + Math.random() * 9000));
-        paint();
-        showToast('示意身份码已刷新');
-      });
-
-      paint();
-    </script>
   </body>
 </html>
