@@ -6,8 +6,87 @@
     <meta name="theme-color" content="#090b0d" />
     <title>驿站地图 · 校园快递</title>
     <link rel="stylesheet" href="style.css" />
+    <style>
+      .map-page .station-map { padding: 0; overflow: hidden; }
+      .map-page .station-map::before { content: none; }
+      .map-page .map-toolbar { flex-wrap: wrap; }
+      .map-page .map-legend { font-size: 11px; }
+      .map-page .zone-button { min-height: 44px; font-size: 12px; }
+
+      .map-view { overflow-x: auto; }
+      .map-plan { position: relative; aspect-ratio: 760 / 500; container-type: inline-size; }
+      .map-view.is-zoomed .map-plan { width: max(100%, 720px); }
+      .map-hint { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
+
+      .map-facilities { position: absolute; inset: 0; width: 100%; height: 100%; }
+      .map-wall { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+      .map-marker { color: var(--amber); }
+      .map-marker text { fill: var(--text); font-size: 21px; font-weight: 600; }
+      .map-marker .map-marker-note { fill: #f5c980; font-size: 15px; font-weight: 400; }
+      .map-marker-door { color: var(--green); }
+      .map-marker-query { color: var(--blue); }
+      .map-icon { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+      .map-badge { fill: var(--amber-soft); }
+      .map-marker-door .map-badge { fill: var(--green-soft); }
+      .map-marker-query .map-badge { fill: var(--blue-soft); }
+
+      .map-rack {
+        position: absolute;
+        display: flex;
+        left: var(--rack-x);
+        top: var(--rack-y);
+        width: var(--rack-width);
+        height: var(--rack-height);
+        overflow: hidden;
+        border: 1px solid var(--muted);
+        border-radius: 5px;
+        background: var(--surface-2);
+      }
+      .map-rack-side { display: flex; flex: 1 1 0; flex-direction: column; min-width: 0; }
+      .map-rack-side + .map-rack-side { border-left: 1px solid var(--muted); }
+      .map-page .map-cell {
+        flex: 1 1 0;
+        min-height: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: var(--text);
+        font-size: clamp(10px, 2.8cqw, 22px);
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+      }
+      .map-cell + .map-cell { border-top: 1px solid var(--muted); }
+      .map-page .map-cell:hover { background: var(--blue-soft); }
+      .map-page .map-cell.selected { background: var(--blue); color: var(--bg); box-shadow: none; }
+      .map-page .map-cell:focus-visible { outline: 2px solid var(--text); outline-offset: -2px; }
+      .map-rack-empty { background: linear-gradient(to top right, transparent 49%, var(--muted) 50%, transparent 51%), linear-gradient(to bottom right, transparent 49%, var(--muted) 50%, transparent 51%), var(--surface); }
+      .map-empty-label { display: none; }
+      @container (min-width: 600px) {
+        .map-rack-empty { justify-content: center; align-items: center; }
+        .map-empty-label {
+          display: block;
+          background: var(--surface);
+          color: var(--text);
+          font-size: 10px;
+          white-space: nowrap;
+        }
+      }
+
+      @media (min-width: 700px) {
+        .map-page { --app-width: clamp(640px, calc(152vh - 600px), 840px); }
+        .map-page .app-frame { display: flex; flex-direction: column; padding-bottom: 0; }
+        .map-page .app-header, .map-page .bottom-nav { flex-shrink: 0; }
+        .map-page .screen { flex: 1 0 auto; }
+        .map-page .bottom-nav { left: auto; width: calc(100% + 36px); margin-inline: -18px; transform: none; }
+      }
+      @media (min-width: 840px) {
+        .map-page .map-zoom, .map-page .map-hint { display: none; }
+        .map-view.is-zoomed .map-plan { width: 100%; }
+      }
+    </style>
   </head>
-  <body>
+  <body class="map-page">
     <div class="app-frame">
       <header class="app-header">
         <a class="brand" href="index.html" aria-label="返回首页">
@@ -17,32 +96,86 @@
         <span class="header-status"><i></i>今日 3 件待取</span>
       </header>
 
-      <!-- 同学 C 负责本页：只在 main 里改功能 -->
       <main id="app-content" class="screen" tabindex="-1">
         <div class="subscreen-head">
           <a class="back-button" href="index.html" aria-label="返回首页">‹</a>
           <div>
             <h1>驿站地图</h1>
-            <small>平面货架图，点选货架查看位置</small>
+            <small>点选货架编号，查看所在位置</small>
           </div>
         </div>
 
         <div class="map-toolbar">
-          <div class="zone-switch">
-            <button class="zone-button active" type="button">A 区</button>
-            <button class="zone-button" type="button">B 区</button>
-          </div>
           <div class="map-legend">
-            <span><i class="legend-dot blue"></i>已选</span>
             <span><i class="legend-dot gray"></i>货架</span>
+            <span><i class="legend-dot blue"></i>已选货架</span>
           </div>
+          <button class="zone-button map-zoom" id="mapZoom" type="button" aria-controls="mapView">放大地图</button>
         </div>
 
-        <div class="station-map" id="stationMap"></div>
+        <div class="station-map">
+          <div class="map-view" id="mapView" role="region" aria-label="货架地图">
+            <div class="map-plan" id="mapPlan">
+              <svg class="map-facilities" viewBox="0 0 760 500" role="img" aria-labelledby="facilityTitle" aria-describedby="facilityDetails">
+                <title id="facilityTitle">驿站设施位置</title>
+                <desc id="facilityDetails">上排最右侧货架下方是京东出库处。下方竖向过道通往驿站大门，右方横向过道通往侧门。下排左侧有三台出库机，每台均支持淘宝、抖音和拼多多。下排右侧、50 号货架旁是取件码查询机。</desc>
+                <defs>
+                  <g id="doorIcon" class="map-icon">
+                    <path d="M2 21h20M5 21V3h14v18M8 21V8l7-4v17m-3-8h.5" />
+                  </g>
+                  <g id="terminalIcon" class="map-icon">
+                    <rect x="5" y="2" width="14" height="20" rx="2" />
+                    <rect x="8" y="5" width="8" height="6" rx="1" />
+                    <path d="M8 15h8m-5 3h2" />
+                  </g>
+                </defs>
+                <rect class="map-wall" x="13" y="16" width="734" height="468" rx="9" />
+                <g class="map-marker" transform="translate(600 196)">
+                  <circle class="map-badge" r="15" />
+                  <path class="map-icon" d="M9-3c0 6-9 12-9 12S-9 3-9-3a9 9 0 0 1 18 0ZM-4-7h8v8h-8zM0-7v3" />
+                  <text x="20" y="7">京东出库处</text>
+                </g>
+                <g class="map-marker map-marker-door" transform="translate(691 245)">
+                  <circle class="map-badge" r="15" />
+                  <use href="#doorIcon" x="-12" y="-12" />
+                  <path class="map-icon" d="M20 0h26m-6-6 6 6-6 6" />
+                  <text y="40" text-anchor="middle">驿站侧门</text>
+                </g>
+                <g class="map-marker" transform="translate(205 428)">
+                  <circle class="map-badge" cx="-35" r="14" />
+                  <circle class="map-badge" r="14" />
+                  <circle class="map-badge" cx="35" r="14" />
+                  <use href="#terminalIcon" x="-47" y="-12" />
+                  <use href="#terminalIcon" x="-12" y="-12" />
+                  <use href="#terminalIcon" x="23" y="-12" />
+                  <text y="36" text-anchor="middle">出库机 × 3</text>
+                  <text class="map-marker-note" x="-28" y="51" text-anchor="middle">每台均支持淘宝、抖音、拼多多</text>
+                </g>
+                <g class="map-marker map-marker-door" transform="translate(293 423)">
+                  <circle class="map-badge" r="14" />
+                  <use href="#doorIcon" x="-12" y="-12" />
+                  <path class="map-icon" d="M0 19v30m-6-6 6 6 6-6" />
+                  <text x="20" y="39">驿站大门</text>
+                </g>
+                <g class="map-marker map-marker-query" transform="translate(481 397)">
+                  <circle class="map-badge" r="10" />
+                  <g class="map-icon" transform="scale(.75)">
+                    <rect x="-10" y="-9" width="20" height="15" rx="2" />
+                    <path d="M0 6v4m-4 0h8m-3-12 2 2" />
+                    <circle cx="-1" cy="-4" r="3" />
+                  </g>
+                  <path class="map-icon" d="M0 15v32h13" />
+                  <text x="19" y="54">取件码查询机</text>
+                </g>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <p class="map-hint" id="mapHint" hidden>左右滑动查看完整地图</p>
 
-        <div class="map-summary">
-          <div><span>当前货架</span><strong id="selectedShelfLabel">A-03</strong></div>
-          <small id="selectedLayerLabel">夹层 2 · 18 格</small>
+        <div class="map-summary" role="status">
+          <div><span>当前货架</span><strong id="selectedShelfLabel">尚未选择</strong></div>
+          <small id="selectedLocation"></small>
         </div>
       </main>
 
@@ -52,60 +185,80 @@
       </nav>
     </div>
 
-    <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
     <script>
-      // 同学 C 的功能脚本写在这里
-      const shelfRows = [
-        ['A-01', 'A-02', 'A-03', 'A-04', 'A-05', 'A-06'],
-        ['A-07', 'A-08', 'A-09', 'A-10', 'A-11', 'A-12'],
-        ['A-13', 'A-14', 'A-15', 'A-16', 'A-17', 'A-18'],
-        ['A-19', 'A-20', 'A-21', 'A-22', 'A-23', 'A-24'],
+      // 每侧编号按示意图从上到下排列。
+      const upperRacks = [
+        [[26, 25, 24], [29, 28, 27]],
+        [[32, 31, 30], [35, 34, 33]],
+        [[38, 37, 36], [41, 40, 39]],
+        [[44, 43, 42], [47, 46]],
+        [[], [53, 52, 51]],
+        [[55, 54]],
       ];
-
-      const selected = { shelf: 'A-03', layer: '夹层 2 · 18 格' };
-      const toast = document.getElementById('toast');
-      const stationMap = document.getElementById('stationMap');
+      const lowerRacks = [
+        [[16, 15], [14, 13]],
+        [[12, 11], [10, 9]],
+        [[8, 7], [6, 5]],
+        [[4, 3], [2, 1]],
+        [[50], [45, 48]],
+      ];
+      const mapPlan = document.getElementById('mapPlan');
+      const mapView = document.getElementById('mapView');
+      const mapZoom = document.getElementById('mapZoom');
+      const mapHint = document.getElementById('mapHint');
       const shelfLabel = document.getElementById('selectedShelfLabel');
-      const layerLabel = document.getElementById('selectedLayerLabel');
+      const locationLabel = document.getElementById('selectedLocation');
+      let selectedShelf;
 
-      function showToast(message) {
-        toast.textContent = message;
-        toast.classList.add('visible');
-        clearTimeout(showToast.timer);
-        showToast.timer = setTimeout(() => toast.classList.remove('visible'), 2200);
+      function rackMarkup(sides, location, x, y, width, height) {
+        const bounds = `--rack-x:${x / 760 * 100}%;--rack-y:${y / 500 * 100}%;--rack-width:${width / 760 * 100}%;--rack-height:${height / 500 * 100}%`;
+        const columns = sides.map((numbers, index) => {
+          const sideLocation = sides.length === 1 ? location : `${location} · ${index === 0 ? '左侧' : '右侧'}`;
+          if (!numbers.length) {
+            return `<div class="map-rack-side map-rack-empty" role="img" aria-label="${sideLocation}无货物"><span class="map-empty-label">无货物</span></div>`;
+          }
+          const cells = numbers.map((number) => `
+            <button class="shelf-rect map-cell" type="button" data-shelf="${number}" data-location="${sideLocation}" aria-label="${number} 号货架，${sideLocation}" aria-pressed="false">${number}</button>`
+          ).join('');
+          return `<div class="map-rack-side">${cells}</div>`;
+        }).join('');
+        return `<div class="map-rack" style="${bounds}">${columns}</div>`;
       }
 
-      function paintMap() {
-        stationMap.innerHTML = shelfRows.map((row, rowIndex) => `
-          <div class="map-row">
-            <span class="map-row-label">${rowIndex + 1} 排</span>
-            ${row.map((shelf) => `<button class="shelf-rect ${shelf === selected.shelf ? 'selected' : ''}" data-shelf="${shelf}" type="button">${shelf}</button>`).join('')}
-          </div>`).join('');
-      }
+      mapPlan.insertAdjacentHTML('beforeend', [
+        rackMarkup([[23, 24, 25, 26, 27]], '左侧长架', 25, 37, 62, 411),
+        ...upperRacks.map((sides, index) => rackMarkup(sides, `上排第 ${index + 1} 列`, 115 + index * 94, 44, 74, index === 5 ? 132 : 164)),
+        ...lowerRacks.map((sides, index) => rackMarkup(sides, `下排第 ${index + 1} 列`, 115 + index * 94, 278, 74, 130)),
+      ].join(''));
 
-      document.addEventListener('click', (event) => {
-        const shelfButton = event.target.closest('.shelf-rect');
-        if (shelfButton) {
-          const shelf = shelfButton.dataset.shelf;
-          selected.shelf = shelf;
-          selected.layer = `夹层 2 · ${Number(shelf.slice(2)) + 1} 格`;
-          paintMap();
-          shelfLabel.textContent = selected.shelf;
-          layerLabel.textContent = selected.layer;
-          showToast(`已选择 ${selected.shelf}`);
-          return;
-        }
+      mapPlan.addEventListener('click', (event) => {
+        const shelf = event.target.closest('.map-cell');
+        if (!shelf || shelf === selectedShelf) return;
 
-        const zoneButton = event.target.closest('.zone-button');
-        if (zoneButton) {
-          document.querySelectorAll('.zone-button').forEach((item) => item.classList.remove('active'));
-          zoneButton.classList.add('active');
-          showToast(zoneButton.textContent.trim() === 'B 区' ? 'B 区示意图将在后续补充' : '已切换到 A 区');
+        if (selectedShelf) {
+          selectedShelf.classList.remove('selected');
+          selectedShelf.setAttribute('aria-pressed', 'false');
         }
+        selectedShelf = shelf;
+        shelf.classList.add('selected');
+        shelf.setAttribute('aria-pressed', 'true');
+        shelfLabel.textContent = `${shelf.dataset.shelf} 号货架`;
+        locationLabel.textContent = shelf.dataset.location;
       });
 
-      paintMap();
+      mapZoom.addEventListener('click', () => {
+        const zoomed = mapView.classList.toggle('is-zoomed');
+        mapZoom.textContent = zoomed ? '查看全图' : '放大地图';
+        mapHint.hidden = !zoomed;
+        mapView.tabIndex = zoomed ? 0 : -1;
+        if (zoomed && selectedShelf) {
+          const shelfBounds = selectedShelf.getBoundingClientRect();
+          const viewportBounds = mapView.getBoundingClientRect();
+          mapView.scrollLeft += shelfBounds.left + shelfBounds.width / 2 - viewportBounds.left - mapView.clientWidth / 2;
+        } else {
+          mapView.scrollLeft = 0;
+        }
+      });
     </script>
   </body>
 </html>
